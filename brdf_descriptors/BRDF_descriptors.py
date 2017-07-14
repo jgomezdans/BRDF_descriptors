@@ -45,20 +45,21 @@ def process_time_input(timestamp):
     "%Y-%m-%d" format, (ii) a string in "%Y%j" format or
     (iii) a datetime.datetime object. Returns a datetime.datetime
     ojbect, and raises ValueError if none of the options fits."""
-    try: 
-        output_time = datetime.datetime.strptime(timestamp, 
-                                                    "%Y-%m-%d")
-    except ValueError:
-        try:
+    if type(timestamp) == datetime.datetime:
+        output_time = timestamp
+    elif type(timestamp) == str:
+        try: 
             output_time = datetime.datetime.strptime(timestamp, 
-                                                    "%Y%j")
+                                                    "%Y-%m-%d")
         except ValueError:
-            if type(timestamp) == datetime.datetime:
-                output_time = timestamp
-            else:
+            try:
+                output_time = datetime.datetime.strptime(timestamp, 
+                                                    "%Y%j")
+            except ValueError:
                 raise ValueError("The passed timestamp wasn't either " +
-                    'a "%Y-%m-%d" string, a "%Y%j" string or a ' +
-                    "datetime.datetime object")
+                    'a "%Y-%m-%d" string, a "%Y%j" string')
+    else:
+        raise ValueError("You can only use a string or a datetime object")
     return output_time
 
 
