@@ -176,6 +176,61 @@ def process_time_input(timestamp):
         raise ValueError("You can only use a string or a datetime object")
     return output_time
 
+def open_gdal_dataset(fname):
+    g = gdal.Open(fname)
+    if g is None:
+        raise IOError("Can't open %s" % fname)
+    data = g.ReadAsArray()
+    return data
+    
+
+def process_masked_kernels(band_no, a1_granule, a2_granule):
+    fname_a1 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a1_granule)
+    fname_a2 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a2_granule)
+    fdata = fname_a1  + 'BRDF_Albedo_Parameters_Band%d' % (fname_a1, band_no)
+    fsnow = fname_a2 + 'Snow_BRDF_Albedo'
+    fland = fname_a2 + 'BRDF_Albedo_LandWaterType'
+    func = fname_a2 + 'BRDF_Albedo_Uncertainty' % a2_granule
+    fqa = fname_a2 + 'BRDF_Albedo_Band_Quality_Band%d' %  band_no
+    
+    for fname in [fdata, fsnow, fland, func, fqa]:
+        data = open_gdal_dataset(fname)
+            
+        if fname.find("Albedo_Parameters") >= 0:
+            # Read kernels, post process
+            kernels = process_kernels(data)
+        elif fname.find("Snow") >= 0:
+            # Read snow mask... post process
+            snow = process_snow(data)
+        elif fname.find("LandWaterType") >= 0:
+            land = data == 1 # Only land
+        elif fname.find("BRDF_Albedo_Uncertainty") >= 0:
+            unc = process_unc (data)
+        elif fname.find("BRDF_Albedo_Band_Quality_Band") >= 0:
+            qa = np.where(data <= 1, True, False) # Best & good
+            
+    # Create mask:
+    # 1. Ignore snow
+    # 2. Only land
+    # 3. Only good and best
+    mask = snow * land * qa
+    return kernels, mask
+    
+    
+def process_unc(unc):
+    """Process uncertainty. Fuck know what it means..."""
+    unc = np.where(unc == 32767, np.nan, unc/1000.)
+    
+def process_snow(snow):
+    """Returns True if snow free albedo retrieval"""
+    return np.where(snow==0, False, True)
+
+def process_kernels(kernels):
+    """Scales the kernels, maybe does other things"""
+    kernels = np.where ( kernels == 32767, np.nan, kernels/1000. )
+    return kernels
+
+
 
 class RetrieveBRDFDescriptors(object):
     """Retrieving BRDF descriptors."""
@@ -212,8 +267,20 @@ class RetrieveBRDFDescriptors(object):
                 raise IOError("mcd43a2_dir does not exist!")
         self.a2_granules = find_granules(self.mcd43a2_dir, tile, "A2",
                                          self.start_time, self.end_time)
+        a1_dates = set(self.a1_granules.keys())
+        a2_dates = set(self.a2_granules.keys())
+        if a1_dates != a2_dates:
+            raise ValueError("A1 and A2 product files do not overlap!")
+            
 
-
+    def get_brdf_descriptors(self, band_no, date):
+        if 1 <= band_no <= 7:
+            raise ValueError ("Bands can only go from 1 to 7!")
+        the_date = process_time_input(date)
+        a1_granule = self.a1_granules[the_date]
+        a2_granule = self.a2_granules[the_date]
+        kernels, mask = process_masked_kernels(a1_granule, a2_granule)
+        return kernels, mask
 
     
 if __name__ == "__main__":
