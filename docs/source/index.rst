@@ -20,6 +20,8 @@ The BRDF descriptors module is supposed to access BRDF descriptors from products
 2. Check that all data is OK and so on (i.e. no missing MCD43A1 and MCD43A2 files).
 3. Allow the user to retrieve the kernels, a valid pixels mask and a measure of uncertainty for a particular date and spectral band.
 
+While we first implement this with MCD43, other equivalent products could be used. Also, the current definition of uncertainty isn't great, and will need to be finessed.
+
 
 
 
