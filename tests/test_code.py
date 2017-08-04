@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 from distutils import dir_util
 
-from brdf_descriptors.BRDF_descriptors import process_time_input
-from brdf_descriptors.BRDF_descriptors import find_granules
-from brdf_descriptors.BRDF_descriptors import RetrieveBRDFDescriptors
+from BRDF_descriptors.BRDF_descriptors import process_time_input
+from BRDF_descriptors.BRDF_descriptors import find_granules
+from BRDF_descriptors.BRDF_descriptors import RetrieveBRDFDescriptors
 
 
 def test_time_string1():
@@ -48,7 +48,7 @@ def test_findgranules1(monkeypatch):
            '/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/MCD43A2.A2016005.h20v11.006.2016174094032.hdf',
            '/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/MCD43A2.A2016006.h20v11.006.2016174100944.hdf']
 
-    monkeypatch.setattr("brdf_descriptors.BRDF_descriptors.locate", lambda x, y:files)
+    monkeypatch.setattr("BRDF_descriptors.BRDF_descriptors.locate", lambda x, y:files)
     granules = find_granules("/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/", 
                              "h20v11", "A2", datetime.datetime(2016,1,1),
                              None)
@@ -58,7 +58,7 @@ def test_findgranules2(monkeypatch):
     #find_granules(dire, tile, product, start_time, end_time):
     files=[]
     with pytest.raises(IOError):
-        monkeypatch.setattr("brdf_descriptors.BRDF_descriptors.locate", lambda x, y:files)
+        monkeypatch.setattr("BRDF_descriptors.BRDF_descriptors.locate", lambda x, y:files)
         granules = find_granules("/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/", 
                                 "h20v11", "A2", datetime.datetime(2016,1,1),
                                 None)
@@ -68,14 +68,9 @@ def test_findgranules3(monkeypatch):
     files=['/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/MCD43A2.A2016001.h20v11.006.2016174080052.hdf',
            '/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/MCD43A2.A2016002.h20v11.006.2016174082609.hdf',
            '/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/MCD43A2.A2016003.h20v11.006.2016174085337.hdf']
-    monkeypatch.setattr("brdf_descriptors.BRDF_descriptors.locate", lambda x, y:files)
+    monkeypatch.setattr("BRDF_descriptors.BRDF_descriptors.locate", lambda x, y:files)
     granules = find_granules("/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/", 
                                 "h20v11", "A2", datetime.datetime(2016,1,1),
                                 datetime.datetime(2016,1,3))
     assert set(granules.values()) == set(files)
     
-        
-        
-
-
-
