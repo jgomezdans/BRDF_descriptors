@@ -198,7 +198,9 @@ class RetrieveBRDFDescriptors(object):
 
     
 if __name__ == "__main__":
-    rr = RetrieveBRDFDescriptors("h20v11","/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/","2016-01-01")
+    rr = RetrieveBRDFDescriptors("h20v11",
+                                 "/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/",
+                                 "2016-01-01")
         
             
             
