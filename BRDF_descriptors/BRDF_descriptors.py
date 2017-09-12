@@ -188,7 +188,7 @@ class RetrieveBRDFDescriptors(object):
             
 
     def get_brdf_descriptors(self, band_no, date):
-        if 1 <= band_no <= 7:
+        if not (1 <= band_no <= 7):
             raise ValueError ("Bands can only go from 1 to 7!")
         the_date = process_time_input(date)
         a1_granule = self.a1_granules[the_date]
@@ -198,9 +198,9 @@ class RetrieveBRDFDescriptors(object):
 
     
 if __name__ == "__main__":
-    rr = RetrieveBRDFDescriptors("h20v11",
-                                 "/data/selene/ucfajlg/S2_AC/MCD43/Pretoria/",
-                                 "2016-01-01")
+    rr = RetrieveBRDFDescriptors("h18v04",
+                                 "/data/selene/ucfajlg/Aurade_MODIS/MCD43/",
+                                 "2013-01-01", end_time="2013-05-01")
         
             
             
