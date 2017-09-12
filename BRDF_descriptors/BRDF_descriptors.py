@@ -101,13 +101,13 @@ def open_gdal_dataset(fname):
 def process_masked_kernels(band_no, a1_granule, a2_granule):
     fname_a1 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a1_granule)
     fname_a2 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a2_granule)
-    fdata = fname_a1  + 'BRDF_Albedo_Parameters_Band%d' % (fname_a1, band_no)
+    fdata = fname_a1  + 'BRDF_Albedo_Parameters_Band%d' % (band_no)
     fsnow = fname_a2 + 'Snow_BRDF_Albedo'
     fland = fname_a2 + 'BRDF_Albedo_LandWaterType'
-    func = fname_a2 + 'BRDF_Albedo_Uncertainty' % a2_granule
+    func = fname_a2 + 'BRDF_Albedo_Uncertainty'# % a2_granule
     fqa = fname_a2 + 'BRDF_Albedo_Band_Quality_Band%d' %  band_no
     
-    for fname in [fdata, fsnow, fland, func, fqa]:
+    for fname in [fdata, fsnow, fland, fqa]:
         data = open_gdal_dataset(fname)
             
         if fname.find("Albedo_Parameters") >= 0:
@@ -193,7 +193,7 @@ class RetrieveBRDFDescriptors(object):
         the_date = process_time_input(date)
         a1_granule = self.a1_granules[the_date]
         a2_granule = self.a2_granules[the_date]
-        kernels, mask = process_masked_kernels(a1_granule, a2_granule)
+        kernels, mask = process_masked_kernels(band_no, a1_granule, a2_granule)
         return kernels, mask
 
     
