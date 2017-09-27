@@ -90,6 +90,7 @@ def process_time_input(timestamp):
         raise ValueError("You can only use a string or a datetime object")
     return output_time
 
+
 def open_gdal_dataset(fname):
     g = gdal.Open(fname)
     if g is None:
@@ -122,28 +123,30 @@ def process_masked_kernels(band_no, a1_granule, a2_granule):
             unc = process_unc (data)
         elif fname.find("BRDF_Albedo_Band_Quality_Band") >= 0:
             qa = np.where(data <= 1, True, False) # Best & good
-
+            qa_val = data*1
     # Create mask:
     # 1. Ignore snow
     # 2. Only land
     # 3. Only good and best
     mask = snow * land * qa
-    return kernels, mask
+    qa_val = np.where(mask, qa_val, np.nan)
+    return kernels, mask, qa_val
 
 
 def process_unc(unc):
     """Process uncertainty. Fuck know what it means..."""
     unc = np.where(unc == 32767, np.nan, unc/1000.)
 
+
 def process_snow(snow):
     """Returns True if snow free albedo retrieval"""
-    return np.where(snow==0, False, True)
+    return np.where(snow==0, True, False)
+
 
 def process_kernels(kernels):
     """Scales the kernels, maybe does other things"""
     kernels = np.where ( kernels == 32767, np.nan, kernels/1000. )
     return kernels
-
 
 
 class RetrieveBRDFDescriptors(object):
@@ -193,8 +196,9 @@ class RetrieveBRDFDescriptors(object):
         the_date = process_time_input(date)
         a1_granule = self.a1_granules[the_date]
         a2_granule = self.a2_granules[the_date]
-        kernels, mask = process_masked_kernels(band_no, a1_granule, a2_granule)
-        return kernels, mask
+        kernels, mask, qa = process_masked_kernels(band_no, a1_granule,
+                                                   a2_granule)
+        return kernels, mask, qa
 
 
 if __name__ == "__main__":
