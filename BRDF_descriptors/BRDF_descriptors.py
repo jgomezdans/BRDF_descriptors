@@ -2,7 +2,7 @@
 
 """Retrieve BRDF shape descriptors from MCD43A1 and MCD43A2 MODIS products.
 BRDF descriptors are here assumed to be the weights to the linear kernel
-model fit to the data. In this case, we assume that the MODIS set of 
+model fit to the data. In this case, we assume that the MODIS set of
 kernels have been used.
 """
 
@@ -49,10 +49,10 @@ def locate(root_dir, match_expr):
 
 
 def find_granules(dire, tile, product, start_time, end_time):
-    """Find MCD43 granules based on folder, tile and product type (A1 
-    or A2). Returns a dictionary of datetimes of the products and 
+    """Find MCD43 granules based on folder, tile and product type (A1
+    or A2). Returns a dictionary of datetimes of the products and
     granules, or raises an IOError exception if not files found."""
-    
+
     times = []
     fnames = []
     granules = locate(dire, "MCD43%s.A*.%s.*.hdf" % (product, tile))
@@ -69,19 +69,19 @@ def find_granules(dire, tile, product, start_time, end_time):
 
 
 def process_time_input(timestamp):
-    """Processes a timestamp given either as (i) a string in 
+    """Processes a timestamp given either as (i) a string in
     "%Y-%m-%d" format, (ii) a string in "%Y%j" format or
     (iii) a datetime.datetime object. Returns a datetime.datetime
     ojbect, and raises ValueError if none of the options fits."""
     if type(timestamp) == datetime.datetime:
         output_time = timestamp
     elif type(timestamp) == str:
-        try: 
-            output_time = datetime.datetime.strptime(timestamp, 
+        try:
+            output_time = datetime.datetime.strptime(timestamp,
                                                     "%Y-%m-%d")
         except ValueError:
             try:
-                output_time = datetime.datetime.strptime(timestamp, 
+                output_time = datetime.datetime.strptime(timestamp,
                                                     "%Y%j")
             except ValueError:
                 raise ValueError("The passed timestamp wasn't either " +
@@ -96,7 +96,7 @@ def open_gdal_dataset(fname):
         raise IOError("Can't open %s" % fname)
     data = g.ReadAsArray()
     return data
-    
+
 
 def process_masked_kernels(band_no, a1_granule, a2_granule):
     fname_a1 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a1_granule)
@@ -106,10 +106,10 @@ def process_masked_kernels(band_no, a1_granule, a2_granule):
     fland = fname_a2 + 'BRDF_Albedo_LandWaterType'
     func = fname_a2 + 'BRDF_Albedo_Uncertainty'# % a2_granule
     fqa = fname_a2 + 'BRDF_Albedo_Band_Quality_Band%d' %  band_no
-    
+
     for fname in [fdata, fsnow, fland, fqa]:
         data = open_gdal_dataset(fname)
-            
+
         if fname.find("Albedo_Parameters") >= 0:
             # Read kernels, post process
             kernels = process_kernels(data)
@@ -122,19 +122,19 @@ def process_masked_kernels(band_no, a1_granule, a2_granule):
             unc = process_unc (data)
         elif fname.find("BRDF_Albedo_Band_Quality_Band") >= 0:
             qa = np.where(data <= 1, True, False) # Best & good
-            
+
     # Create mask:
     # 1. Ignore snow
     # 2. Only land
     # 3. Only good and best
     mask = snow * land * qa
     return kernels, mask
-    
-    
+
+
 def process_unc(unc):
     """Process uncertainty. Fuck know what it means..."""
     unc = np.where(unc == 32767, np.nan, unc/1000.)
-    
+
 def process_snow(snow):
     """Returns True if snow free albedo retrieval"""
     return np.where(snow==0, False, True)
@@ -148,7 +148,7 @@ def process_kernels(kernels):
 
 class RetrieveBRDFDescriptors(object):
     """Retrieving BRDF descriptors."""
-    def __init__ (self, tile, mcd43a1_dir, start_time, end_time=None, 
+    def __init__ (self, tile, mcd43a1_dir, start_time, end_time=None,
             mcd43a2_dir=None):
         """The class needs to locate the data granules. We assume that
         these are available somewhere in the filesystem and that we can
@@ -185,7 +185,7 @@ class RetrieveBRDFDescriptors(object):
         a2_dates = set(self.a2_granules.keys())
         if a1_dates != a2_dates:
             raise ValueError("A1 and A2 product files do not overlap!")
-            
+
 
     def get_brdf_descriptors(self, band_no, date):
         if not (1 <= band_no <= 7):
@@ -196,14 +196,14 @@ class RetrieveBRDFDescriptors(object):
         kernels, mask = process_masked_kernels(band_no, a1_granule, a2_granule)
         return kernels, mask
 
-    
+
 if __name__ == "__main__":
     rr = RetrieveBRDFDescriptors("h18v04",
                                  "/data/selene/ucfajlg/Aurade_MODIS/MCD43/",
                                  "2013-01-01", end_time="2013-05-01")
-        
-            
-            
-        
-    
-        
+
+
+
+
+
+
