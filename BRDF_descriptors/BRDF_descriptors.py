@@ -109,7 +109,6 @@ def process_masked_kernels(band_no, a1_granule, a2_granule):
     
     for fname in [fdata, fsnow, fland, fqa]:
         data = open_gdal_dataset(fname)
-            
         if fname.find("Albedo_Parameters") >= 0:
             # Read kernels, post process
             kernels = process_kernels(data)
@@ -137,7 +136,7 @@ def process_unc(unc):
     
 def process_snow(snow):
     """Returns True if snow free albedo retrieval"""
-    return np.where(snow==0, False, True)
+    return np.where(snow==0, True, False)
 
 def process_kernels(kernels):
     """Scales the kernels, maybe does other things"""
