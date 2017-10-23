@@ -98,7 +98,10 @@ def open_gdal_dataset(fname):
     return data
     
 
-def process_masked_kernels(band_no, a1_granule, a2_granule):
+def process_masked_kernels(band_no, a1_granule, a2_granule, 
+                           band_transfer=None):
+    if band_transfer is not None:
+        band_no = band_transfer[band_no]
     
     fname_a1 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a1_granule)
     fname_a2 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a2_granule)
@@ -198,15 +201,21 @@ class RetrieveBRDFDescriptors(object):
         a2_dates = set(self.a2_granules.keys())
         if a1_dates != a2_dates:
             raise ValueError("A1 and A2 product files do not overlap!")
-            
+         
+        self.band_transfer = None
 
     def get_brdf_descriptors(self, band_no, date):
 #        if not (1 <= band_no <= 7) :
 #            raise ValueError ("Bands can only go from 1 to 7!")
+        
         the_date = process_time_input(date)
-        a1_granule = self.a1_granules[the_date]
+        try:
+            a1_granule = self.a1_granules[the_date]
+        except KeyError:
+            return None
         a2_granule = self.a2_granules[the_date]
-        kernels, mask, qa = process_masked_kernels(band_no, a1_granule, a2_granule)
+        kernels, mask, qa = process_masked_kernels(band_no, a1_granule, 
+                            a2_granule, band_transfer=self.band_transfer)
         return kernels, mask, qa
 
     
