@@ -127,12 +127,13 @@ def process_masked_kernels(band_no, a1_granule, a2_granule,
         elif fname.find("Snow") >= 0:
             # Read snow mask... post process
             snow = process_snow(data)
-        elif fname.find("LandWaterType") >= 0:
+        elif fname.find("XXXXXLandWaterType") >= 0:
             shp = data.shape
             land = np.in1d(data, [1,3,4,5])#data == 1 # Only land
             land = land.reshape(shp)
-        elif fname.find("BRDF_Albedo_Uncertainty") >= 0:
-            unc = process_unc (data)
+            
+        #elif fname.find("BRDF_Albedo_Uncertainty") >= 0:
+        #    unc = process_unc (data)
         elif fname.find("BRDF_Albedo_Band_Quality") >= 0 or \
             fname.find("BRDF_Albedo_Band_Mandatory_Quality") >= 0:
             qa = np.where(data <= 1, True, False) # Best & good
@@ -142,7 +143,7 @@ def process_masked_kernels(band_no, a1_granule, a2_granule,
     # 1. Ignore snow
     # 2. Only land
     # 3. Only good and best
-    mask = snow * land * qa
+    mask = snow * qa  #*land * qa
     qa_val = np.where(mask, qa_val, np.nan)
     return kernels, mask, qa_val
     
