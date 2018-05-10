@@ -114,7 +114,7 @@ def open_gdal_dataset(fname, roi=None):
         xoff = ulx
         yoff = uly
         xcount = ulx - lrx
-        ycount = uly - lry
+        ycount = lry - uly
         data = g.ReadAsArray(xoff, yoff, xcount, ycount).astype(
                              GDAL2NUMPY(g.GetRasterBand(1).DataType))
     return data
