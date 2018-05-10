@@ -62,7 +62,7 @@ def find_granules(dire, tile, product, start_time, end_time):
         fich = os.path.basename (granule)
         timex = datetime.datetime.strptime(fich.split(".")[1][1:], "%Y%j")
         if timex >= start_time and \
-            ( end_time is None or timex <= end_time ):
+            (end_time is None or timex <= end_time ):
             times.append (timex)
             fnames.append(os.path.join(dire,granule))
     return dict(list(zip(times, fnames)))
@@ -78,17 +78,18 @@ def process_time_input(timestamp):
     elif type(timestamp) == str:
         try:
             output_time = datetime.datetime.strptime(timestamp,
-                                                    "%Y-%m-%d")
+                                                     "%Y-%m-%d")
         except ValueError:
             try:
                 output_time = datetime.datetime.strptime(timestamp,
-                                                    "%Y%j")
+                                                         "%Y%j")
             except ValueError:
                 raise ValueError("The passed timestamp wasn't either " +
-                    'a "%Y-%m-%d" string, a "%Y%j" string')
+                                 'a "%Y-%m-%d" string, a "%Y%j" string')
     else:
         raise ValueError("You can only use a string or a datetime object")
     return output_time
+
 
 def open_gdal_dataset(fname):
     g = gdal.Open(fname)
@@ -106,18 +107,17 @@ def process_masked_kernels(band_no, a1_granule, a2_granule,
     fname_a1 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a1_granule)
     fname_a2 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:' % (a2_granule)
     try:
-        fdata = fname_a1  + 'BRDF_Albedo_Parameters_Band%d' % (band_no)
+        fdata = fname_a1 + 'BRDF_Albedo_Parameters_Band%d' % (band_no)
     except TypeError:
-        fdata = fname_a1  + 'BRDF_Albedo_Parameters_%s' % (band_no)
+        fdata = fname_a1 + 'BRDF_Albedo_Parameters_%s' % (band_no)
 
     fsnow = fname_a2 + 'Snow_BRDF_Albedo'
     fland = fname_a2 + 'BRDF_Albedo_LandWaterType'
-    func = fname_a2 + 'BRDF_Albedo_Uncertainty'# % a2_granule
+    func = fname_a2 + 'BRDF_Albedo_Uncertainty'   # % a2_granule
     try:
-        fqa = fname_a2 + 'BRDF_Albedo_Band_Quality_Band%d' %  band_no
+        fqa = fname_a2 + 'BRDF_Albedo_Band_Quality_Band%d' % band_no
     except TypeError:
-        fqa = fname_a1 + 'BRDF_Albedo_Band_Mandatory_Quality_%s' %  band_no
-
+        fqa = fname_a1 + 'BRDF_Albedo_Band_Mandatory_Quality_%s' % band_no
 
     for fname in [fdata, fsnow, fland, fqa]:
         data = open_gdal_dataset(fname)
@@ -129,21 +129,21 @@ def process_masked_kernels(band_no, a1_granule, a2_granule,
             snow = process_snow(data)
         elif fname.find("XXXXXLandWaterType") >= 0:
             shp = data.shape
-            land = np.in1d(data, [1,3,4,5])#data == 1 # Only land
+            land = np.in1d(data, [1, 3, 4, 5])    # data == 1 # Only land
             land = land.reshape(shp)
 
-        #elif fname.find("BRDF_Albedo_Uncertainty") >= 0:
+        # elif fname.find("BRDF_Albedo_Uncertainty") >= 0:
         #    unc = process_unc (data)
         elif fname.find("BRDF_Albedo_Band_Quality") >= 0 or \
-            fname.find("BRDF_Albedo_Band_Mandatory_Quality") >= 0:
-            qa = np.where(data <= 1, True, False) # Best & good
+                fname.find("BRDF_Albedo_Band_Mandatory_Quality") >= 0:
+            qa = np.where(data <= 1, True, False)   # Best & good
             qa_val = data*1
 
     # Create mask:
     # 1. Ignore snow
     # 2. Only land
     # 3. Only good and best
-    mask = snow * qa  #*land * qa
+    mask = snow * qa   # *land * qa
     qa_val = np.where(mask, qa_val, np.nan)
     return kernels, mask, qa_val
 
@@ -152,21 +152,23 @@ def process_unc(unc):
     """Process uncertainty. Fuck know what it means..."""
     unc = np.where(unc == 32767, np.nan, unc/1000.)
 
+
 def process_snow(snow):
     """Returns True if snow free albedo retrieval"""
-    return np.where(snow==0, True, False)
+    return np.where(snow == 0, True, False)
+
 
 def process_kernels(kernels):
     """Scales the kernels, maybe does other things"""
-    kernels = np.where ( kernels == 32767, np.nan, kernels/1000. )
+    kernels = np.where(kernels == 32767, np.nan, kernels/1000.)
     return kernels
-
 
 
 class RetrieveBRDFDescriptors(object):
     """Retrieving BRDF descriptors."""
-    def __init__ (self, tile, mcd43a1_dir, start_time, end_time=None,
-            mcd43a2_dir=None):
+
+    def __init__(self, tile, mcd43a1_dir, start_time, end_time=None,
+                 mcd43a2_dir=None):
         """The class needs to locate the data granules. We assume that
         these are available somewhere in the filesystem and that we can
         index them by location (MODIS tile name e.g. "h19v10") and
@@ -206,8 +208,8 @@ class RetrieveBRDFDescriptors(object):
         self.band_transfer = None
 
     def get_brdf_descriptors(self, band_no, date):
-#        if not (1 <= band_no <= 7) :
-#            raise ValueError ("Bands can only go from 1 to 7!")
+        #        if not (1 <= band_no <= 7) :
+        #            raise ValueError ("Bands can only go from 1 to 7!")
 
         the_date = process_time_input(date)
         try:
@@ -216,7 +218,8 @@ class RetrieveBRDFDescriptors(object):
             return None
         a2_granule = self.a2_granules[the_date]
         kernels, mask, qa = process_masked_kernels(band_no, a1_granule,
-                            a2_granule, band_transfer=self.band_transfer)
+                                            a2_granule,
+                                            band_transfer=self.band_transfer)
         return kernels, mask, qa
 
 
@@ -224,10 +227,3 @@ if __name__ == "__main__":
     rr = RetrieveBRDFDescriptors("h17v05",
                                  "/data/selene/ucfajlg/Ujia/MCD43/",
                                  "2017-05-01", end_time="2017-10-01")
-
-
-
-
-
-
-
