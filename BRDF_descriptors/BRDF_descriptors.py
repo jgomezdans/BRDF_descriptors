@@ -231,10 +231,12 @@ class RetrieveBRDFDescriptors(object):
         if roi is not None:
             assert len(roi) == 4,\
                         f"ROI box needs 4 elements! It has only {len(roi)}!"
-            self.ulx, self.uly, self.lrx, self.lry = roi
-            assert(self.ulx < self.lrx), f" ulx{self.ulx} !< lrx{self.lrx}"
-            assert(self.uly < self.lry), f" uly{self.uly} !< lry{self.lry}"
-
+            ulx, uly, lrx, lry = roi
+            assert(ulx < lrx), f" ulx{ulx} !< lrx{lrx}"
+            assert(uly < lry), f" uly{uly} !< lry{lry}"
+            self.roi = roi
+        else:
+            self.roi = None
     def get_brdf_descriptors(self, band_no, date):
         #        if not (1 <= band_no <= 7) :
         #            raise ValueError ("Bands can only go from 1 to 7!")
@@ -248,7 +250,7 @@ class RetrieveBRDFDescriptors(object):
         kernels, mask, qa = process_masked_kernels(band_no, a1_granule,
                                                    a2_granule,
                                                    band_transfer=self.band_transfer,
-                                                   )
+                                                   roi=self.roi)
         return kernels, mask, qa
 
 
