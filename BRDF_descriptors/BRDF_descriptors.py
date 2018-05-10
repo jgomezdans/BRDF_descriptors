@@ -39,6 +39,18 @@ __version__ = "1.0 (13.07.2017)"
 __license__ = "GPLv3"
 __email__ = "j.gomez-dans@ucl.ac.uk"
 
+GDAL2NUMPY = {gdal.GDT_Byte:   np.uint8,
+              gdal.GDT_UInt16:   np.uint16,
+              gdal.GDT_Int16:   np.int16,
+              gdal.GDT_UInt32:   np.uint32,
+              gdal.GDT_Int32:   np.int32,
+              gdal.GDT_Float32:   np.float32,
+              gdal.GDT_Float64:   np.float64,
+              gdal.GDT_CInt16:   np.complex64,
+              gdal.GDT_CInt32:   np.complex64,
+              gdal.GDT_CFloat32:   np.complex64,
+              gdal.GDT_CFloat64:   np.complex128
+              }
 
 def locate(root_dir, match_expr):
     files = []
@@ -91,11 +103,19 @@ def process_time_input(timestamp):
     return output_time
 
 
-def open_gdal_dataset(fname):
+def open_gdal_dataset(fname, ulx=None, uly=None, lrx=None, lry=None):
     g = gdal.Open(fname)
     if g is None:
         raise IOError("Can't open %s" % fname)
-    data = g.ReadAsArray()
+    if all(corner is None for coerner in [ulx, uly, lrx, lry]):
+        data = g.ReadAsArray()
+    else:
+        xoff = ulx
+        yoff = uly
+        xcount = ulx - lrx
+        ycount = uly - lry
+        data = g.ReadAsArray(xoff, yoff, xcount, ycount).astype(
+                             GDAL2NUMPY(g.GetRasterBand(1).DataType))
     return data
 
 
@@ -168,7 +188,7 @@ class RetrieveBRDFDescriptors(object):
     """Retrieving BRDF descriptors."""
 
     def __init__(self, tile, mcd43a1_dir, start_time, end_time=None,
-                 mcd43a2_dir=None):
+                 mcd43a2_dir=None, roi=None):
         """The class needs to locate the data granules. We assume that
         these are available somewhere in the filesystem and that we can
         index them by location (MODIS tile name e.g. "h19v10") and
@@ -207,6 +227,14 @@ class RetrieveBRDFDescriptors(object):
 
         self.band_transfer = None
 
+        if roi is not None:
+            assert len(roi) == 4,\
+                        f"ROI box needs 4 elements! It has only {len(roi)}!"
+            self.ulx, self.uly, self.lrx, self.lry = roi
+            assert(self.ulx < self.lrx), f" ulx{self.ulx} !< lrx{self.lrx}"
+            assert(self.uly > self.lry), f" uly{self.uly} !> lry{self.lry}"
+
+
     def get_brdf_descriptors(self, band_no, date):
         #        if not (1 <= band_no <= 7) :
         #            raise ValueError ("Bands can only go from 1 to 7!")
@@ -218,8 +246,8 @@ class RetrieveBRDFDescriptors(object):
             return None
         a2_granule = self.a2_granules[the_date]
         kernels, mask, qa = process_masked_kernels(band_no, a1_granule,
-                                            a2_granule,
-                                            band_transfer=self.band_transfer)
+                                                   a2_granule,
+                                                   band_transfer=self.band_transfer)
         return kernels, mask, qa
 
 
