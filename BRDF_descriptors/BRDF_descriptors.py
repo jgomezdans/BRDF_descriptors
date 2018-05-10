@@ -103,13 +103,14 @@ def process_time_input(timestamp):
     return output_time
 
 
-def open_gdal_dataset(fname, ulx=None, uly=None, lrx=None, lry=None):
+def open_gdal_dataset(fname, roi=None):
     g = gdal.Open(fname)
     if g is None:
         raise IOError("Can't open %s" % fname)
-    if all(corner is None for corner in [ulx, uly, lrx, lry]):
+    if roi is None:
         data = g.ReadAsArray()
     else:
+        ulx, uly, lrx, lry = roi
         xoff = ulx
         yoff = uly
         xcount = ulx - lrx
@@ -120,7 +121,7 @@ def open_gdal_dataset(fname, ulx=None, uly=None, lrx=None, lry=None):
 
 
 def process_masked_kernels(band_no, a1_granule, a2_granule,
-                           band_transfer=None):
+                           band_transfer=None, roi=None):
     if band_transfer is not None:
         band_no = band_transfer[band_no]
 
@@ -140,7 +141,7 @@ def process_masked_kernels(band_no, a1_granule, a2_granule,
         fqa = fname_a1 + 'BRDF_Albedo_Band_Mandatory_Quality_%s' % band_no
 
     for fname in [fdata, fsnow, fland, fqa]:
-        data = open_gdal_dataset(fname)
+        data = open_gdal_dataset(fname, roi)
         if fname.find("Albedo_Parameters") >= 0:
             # Read kernels, post process
             kernels = process_kernels(data)
@@ -246,7 +247,8 @@ class RetrieveBRDFDescriptors(object):
         a2_granule = self.a2_granules[the_date]
         kernels, mask, qa = process_masked_kernels(band_no, a1_granule,
                                                    a2_granule,
-                                                   band_transfer=self.band_transfer)
+                                                   band_transfer=self.band_transfer,
+                                                   )
         return kernels, mask, qa
 
 
