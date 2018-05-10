@@ -107,7 +107,7 @@ def open_gdal_dataset(fname, ulx=None, uly=None, lrx=None, lry=None):
     g = gdal.Open(fname)
     if g is None:
         raise IOError("Can't open %s" % fname)
-    if all(corner is None for coerner in [ulx, uly, lrx, lry]):
+    if all(corner is None for corner in [ulx, uly, lrx, lry]):
         data = g.ReadAsArray()
     else:
         xoff = ulx
@@ -233,7 +233,6 @@ class RetrieveBRDFDescriptors(object):
             self.ulx, self.uly, self.lrx, self.lry = roi
             assert(self.ulx < self.lrx), f" ulx{self.ulx} !< lrx{self.lrx}"
             assert(self.uly > self.lry), f" uly{self.uly} !> lry{self.lry}"
-
 
     def get_brdf_descriptors(self, band_no, date):
         #        if not (1 <= band_no <= 7) :
