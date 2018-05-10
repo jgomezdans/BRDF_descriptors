@@ -232,7 +232,7 @@ class RetrieveBRDFDescriptors(object):
                         f"ROI box needs 4 elements! It has only {len(roi)}!"
             self.ulx, self.uly, self.lrx, self.lry = roi
             assert(self.ulx < self.lrx), f" ulx{self.ulx} !< lrx{self.lrx}"
-            assert(self.uly > self.lry), f" uly{self.uly} !> lry{self.lry}"
+            assert(self.uly < self.lry), f" uly{self.uly} !< lry{self.lry}"
 
     def get_brdf_descriptors(self, band_no, date):
         #        if not (1 <= band_no <= 7) :
@@ -254,3 +254,8 @@ if __name__ == "__main__":
     rr = RetrieveBRDFDescriptors("h17v05",
                                  "/data/selene/ucfajlg/Ujia/MCD43/",
                                  "2017-05-01", end_time="2017-10-01")
+    roi=[1100, 640, 1400,740]
+    rr_chunk = RetrieveBRDFDescriptors("h17v05",
+                                       "/data/selene/ucfajlg/Ujia/MCD43/",
+                                       "2017-05-01", end_time="2017-10-01",
+                                       roi=roi)
