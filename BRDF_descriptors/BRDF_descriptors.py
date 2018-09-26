@@ -26,9 +26,7 @@ kernels have been used.
 
 import datetime
 import os
-import glob
-import fnmatch
-
+from pathlib import Path
 
 import numpy as np
 import gdal
@@ -51,22 +49,21 @@ GDAL2NUMPY = {gdal.GDT_Byte:   np.uint8,
               gdal.GDT_CFloat64:   np.complex128
               }
 
-def locate(root_dir, match_expr):
-    files = []
-    for root, _, filenames in os.walk(root_dir):
-        for filename in fnmatch.filter(filenames, match_expr):
-            files.append(filename)
-    return files
-
-
 def find_granules(dire, tile, product, start_time, end_time):
     """Find MCD43 granules based on folder, tile and product type (A1
     or A2). Returns a dictionary of datetimes of the products and
     granules, or raises an IOError exception if not files found."""
-
     times = []
     fnames = []
-    granules = locate(dire, "MCD43%s.A*.%s.*.hdf" % (product, tile))
+    path = Path(dire)
+    start_year = start_time.year
+    end_year = end_time.year
+    granules_start = path.rglob(f"**/MCD43{product:s}.A{start_year:4d}*.{tile:s}.*.hdf")
+    granules = [f  for f in granules_start] 
+    if end_year != start_year:
+        granules_end = path.rglob(f"**/MCD43{product:s}.A{end_year:4d}*.{tile:s}.*.hdf")
+        granules = granules + [f for f in granules_end] 
+    granules = list(set(granules))
     if len(granules) == 0:
         raise IOError("Couldn't find any MCD43%s files in %s" % (product, dire))
     for granule in granules:
@@ -75,7 +72,7 @@ def find_granules(dire, tile, product, start_time, end_time):
         if timex >= start_time and \
             (end_time is None or timex <= end_time ):
             times.append (timex)
-            fnames.append(os.path.join(dire,granule))
+            fnames.append(granule.as_posix())
     return dict(list(zip(times, fnames)))
 
 
@@ -254,11 +251,16 @@ class RetrieveBRDFDescriptors(object):
 
 
 if __name__ == "__main__":
+    mcd43a1_dir = "/group_workspaces/cems2/qa4ecv/vol2/modis.c6.brdf/ladsweb.nascom.nasa.gov/allData/6/MCD43A1/2015/"
+    mcd43a2_dir = "/group_workspaces/cems2/qa4ecv/vol2/modis.c6.brdf/ladsweb.nascom.nasa.gov/allData/6/MCD43A2/2015/"
     rr = RetrieveBRDFDescriptors("h17v05",
-                                 "/data/selene/ucfajlg/Ujia/MCD43/",
-                                 "2017-05-01", end_time="2017-10-01")
+                                 mcd43a1_dir, 
+                                 "2015-01-01", mcd43a2_dir=mcd43a2_dir,
+                                 end_time="2015-12-31")
     roi=[1100, 640, 1400,740]
     rr_chunk = RetrieveBRDFDescriptors("h17v05",
-                                       "/data/selene/ucfajlg/Ujia/MCD43/",
-                                       "2017-05-01", end_time="2017-10-01",
-                                       roi=roi)
+                                 mcd43a1_dir,
+                                 "2015-01-01", 
+                                 mcd43a2_dir=mcd43a2_dir,
+                                 end_time="2015-12-31",
+                                    roi=roi)
